@@ -5,6 +5,7 @@ from functools import wraps
 import json
 from os import environ as env, path
 import urllib
+import requests
 
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify, _app_ctx_stack
@@ -14,6 +15,7 @@ from jose import jwt
 load_dotenv(path.splitext(__file__)[0] + ".env")
 AUTH0_DOMAIN = env["AUTH0_DOMAIN"]
 API_AUDIENCE = env["API_ID"]
+CLIENT_ID = env["CLIENT_ID"]
 
 #
 # This needs to be called application for beanstalk
@@ -85,7 +87,7 @@ def requires_auth(f):
         try:
             unverified_header = jwt.get_unverified_header(token)
         except jwt.JWTError:
-            return "", 401
+            return "", 401, {'Content-Type': 'text/plain'}
         except Exception:
             return "", 500
 
@@ -143,7 +145,7 @@ def server_error(e):
 def ping():
     """No access token required to access this route
     """
-    return "Ping"
+    return 'Ping', 200, {'Content-Type': 'text/plain'}
 
 
 @application.route("/secure")
@@ -153,7 +155,30 @@ def ping():
 def secured_ping():
     """A valid access token is required to access this route
     """
-    return "SECURE!"
+    return 'SECURE!', 200, {'Content-Type': 'text/plain'}
+
+
+@application.route("/gettoken")
+@cross_origin(headers=["Content-Type", "Authorization"])
+def get_token():
+    username = request.args.get('username')
+    password = request.args.get('password')
+
+    payload = {
+        "client_id": CLIENT_ID,
+        "username": username,
+        "password": password,
+        "audience": API_AUDIENCE,
+        "connection": "Username-Password-Authentication",
+        "grant_type": "password"
+    }
+
+    url = "https://"+AUTH0_DOMAIN+"/oauth/token"
+    response = requests.post(url,data=payload)
+    if response.status_code != 200:
+        return "", response.status_code
+    data = response.json()
+    return data["access_token"], 200, {'Content-Type': 'text/plain'}
 
 
 # @APP.route("/secured/private/ping")
@@ -169,5 +194,4 @@ def secured_ping():
 
 
 if __name__ == "__main__":
-    application.debug = True
     application.run(host="0.0.0.0", port=env.get("PORT", 8080))
