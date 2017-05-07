@@ -15,7 +15,7 @@ load_dotenv(path.splitext(__file__)[0] + ".env")
 AUTH0_DOMAIN = env["AUTH0_DOMAIN"]
 API_AUDIENCE = env["API_ID"]
 
-APP = Flask(__name__)
+application = Flask(__name__)
 
 
 # Format error response and append status code.
@@ -123,18 +123,18 @@ def requires_auth(f):
     return decorated
 
 
-@APP.errorhandler(404)
+@application.errorhandler(404)
 def page_not_found(e):
     return "", 404
 
 
-@APP.errorhandler(500)
+@application.errorhandler(500)
 def server_error(e):
     return "", 500
 
 
 # Controllers API
-@APP.route("/ping")
+@application.route("/ping")
 @cross_origin(headers=["Content-Type", "Authorization"])
 def ping():
     """No access token required to access this route
@@ -142,7 +142,7 @@ def ping():
     return "Ping"
 
 
-@APP.route("/secure")
+@application.route("/secure")
 @cross_origin(headers=["Content-Type", "Authorization"])
 @cross_origin(headers=["Access-Control-Allow-Origin", "*"])
 @requires_auth
@@ -165,4 +165,5 @@ def secured_ping():
 
 
 if __name__ == "__main__":
-    APP.run(host="0.0.0.0", port=env.get("PORT", 8080))
+    application.debug = True
+    application.run(host="0.0.0.0", port=env.get("PORT", 8080))
