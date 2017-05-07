@@ -15,6 +15,10 @@ load_dotenv(path.splitext(__file__)[0] + ".env")
 AUTH0_DOMAIN = env["AUTH0_DOMAIN"]
 API_AUDIENCE = env["API_ID"]
 
+#
+# This needs to be called application for beanstalk
+# Can you believe it?
+# http://stackoverflow.com/questions/28048342/how-do-i-configure-the-name-of-my-wsgi-application-on-aws-elastic-beanstalk
 application = Flask(__name__)
 
 
